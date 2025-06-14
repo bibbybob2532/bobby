@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AI Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-main: #202124;
+            --bg-sidebar: #171717;
+            --bg-card: #303134;
+            --bg-input: #3c4043;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --border-color: #5f6368;
+            --accent-primary: #a855f7;
+            --accent-glow: rgba(168, 85, 247, 0.5);
+            --font-family: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            gap: 1.5rem;
+            transition: width 0.3s ease, padding 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+            padding: 1rem 0.5rem;
+        }
+
+        .sidebar.collapsed .sidebar-content {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s ease, transform 0.3s ease;
+        }
+        .sidebar-toggle:hover {
+            color: var(--text-primary);
+        }
+        .sidebar-toggle .logo {
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .sidebar.collapsed .logo {
+            transform: rotate(-90deg);
+        }
+        .logo-gemini-star {
+            transition: opacity 0.3s ease;
+        }
+        .sidebar.collapsed .logo-gemini-star {
+            opacity: 0;
+        }
+
+        .sidebar-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow-y: auto;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+        .sidebar-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: var(--bg-input);
+            border-radius: 4px;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: var(--bg-input);
+            padding: 0.5rem 0.75rem;
+            border-radius: 20px;
+        }
+        .search-bar i {
+            color: var(--text-secondary);
+        }
+        .search-bar input {
+            width: 100%;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .components-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0.25rem;
+        }
+        .section-header span {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .view-more {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .view-more:hover {
+            text-decoration: underline;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        .component-item {
+            height: 60px;
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .component-item::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: white;
+            font-size: 0.8rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .component-item:hover {
+            background-color: var(--bg-input);
+        }
+        .component-item:hover::after {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .component-list-item {
+            background-color: var(--bg-card);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .component-list-item:hover {
+            background-color: var(--bg-input);
+        }
+
+        .sidebar-footer {
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+        }
+        .sidebar.collapsed .sidebar-footer {
+            border-top: none;
+        }
+
+        /* --- Main Content --- */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative; /* For positioning the bottom bar */
+        }
+
+        .main-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .card-container {
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* --- Interactive Feature Cards --- */
+        .feature-card {
+            width: 320px;
+            height: 400px;
+            background-color: var(--bg-card);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-color);
+            transition: transform 0.1s ease-out;
+            animation: pulse 15s infinite ease-in-out;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 20px;
+            background: radial-gradient(
+                400px circle at var(--mouse-x) var(--mouse-y),
+                var(--accent-glow),
+                transparent 40%
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        @keyframes pulse {
+            0%, 95%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+            97% { box-shadow: 0 0 20px 5px var(--accent-glow); }
+        }
+
+        .card-preview {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+        .card-action-button {
+            width: 100%;
+            padding: 1.25rem;
+            background-color: var(--bg-input);
+            border: none;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .card-action-button:hover {
+            background-color: #4a4e52;
+        }
+
+
+        /* --- Bottom Interaction Bar --- */
+        .bottom-bar-wrapper {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .main-input-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--bg-input);
+            padding: 0.5rem 0.75rem;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+        }
+        .main-input {
+            width: 400px;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            padding: 0.5rem;
+        }
+
+        .detach-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 25px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+                        opacity 0.4s ease,
+                        width 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+                        padding 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .bridge {
+            height: 5px;
+            width: 1.5rem; /* The length of the 'rope' */
+            /* UPDATED: Added border-radius to the transition */
+            transition: width 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+                        opacity 0.3s,
+                        border-radius 0.3s ease-in-out;
+            cursor: pointer;
+            border-radius: 0; /* Explicitly start as a straight line */
+            opacity: 0.7;
+        }
+        .bridge:hover {
+            opacity: 1;
+        }
+
+        .left-bridge {
+            background: linear-gradient(to right, var(--accent-primary), var(--bg-input));
+        }
+        .right-bridge {
+            background: linear-gradient(to left, var(--accent-primary), var(--bg-input));
+        }
+
+        /* Hide the button when detached */
+        .bottom-bar-wrapper.left-detached .detach-button.left,
+        .bottom-bar-wrapper.right-detached .detach-button.right {
+            width: 0;
+            padding-left: 0;
+            padding-right: 0;
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
+            border-color: transparent;
+        }
+
+        /* NEW: Add curves to the bridges when the buttons are detached */
+        .bottom-bar-wrapper.left-detached .left-bridge {
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .bottom-bar-wrapper.right-detached .right-bridge {
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+
+        /* --- Universal Components --- */
+        .icon-button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .icon-button:hover {
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+        }
+        .user-account {
+            background-color: #4285F4; /* Google Blue */
+            color: white;
+        }
+        .user-account:hover {
+            background-color: #5a95f5;
+        }
+    </style>
+</head>
+<body>
+
+    <!--
+    *  SIDEBAR
+    -->
+    <aside class="sidebar">
+        <header class="sidebar-header">
+            <button class="sidebar-toggle" aria-label="Toggle Sidebar">
+                <svg class="logo" width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="48" stroke="currentColor" stroke-width="4"/>
+                    <path d="M50 25V50L75 62.5" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path class="logo-gemini-star" d="M50 4L54.3431 16.6569L62.5 12.5L62.5 25L75 25L66.8299 33.1701L75 41.3402L62.5 41.3402L62.5 50L50 50" fill="#A855F7"/>
+                </svg>
+            </button>
+        </header>
+
+        <div class="sidebar-content">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Search">
+            </div>
+
+            <section class="components-section">
+                <div class="section-header">
+                    <span>Recent Components</span>
+                    <button class="view-more">View more</button>
+                </div>
+                <div class="component-grid">
+                    <div class="component-item" data-name="UI Kit"></div>
+                    <div class="component-item" data-name="Icon Pack"></div>
+                    <div class="component-item" data-name="Button Set"></div>
+                    <div class="component-item" data-name="Form Fields"></div>
+                </div>
+            </section>
+
+            <section class="components-section">
+                <div class="section-header">
+                    <span>Current Viewing</span>
+                </div>
+                <div class="component-list-item">work</div>
+            </section>
+
+            <section class="components-section">
+                <div class="section-header">
+                    <span>Recent</span>
+                    <button class="view-more">View more</button>
+                </div>
+                <div class="component-list-item">work</div>
+                 <div class="component-grid">
+                    <div class="component-item" data-name="Dashboard"></div>
+                    <div class="component-item" data-name="API Module"></div>
+                    <div class="component-item" data-name="Auth Flow"></div>
+                    <div class="component-item" data-name="Data Table"></div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="sidebar-footer">
+            <button class="icon-button" aria-label="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </footer>
+    </aside>
+
+    <!--
+    *  MAIN CONTENT
+    -->
+    <div class="main-wrapper">
+        <header class="main-header">
+            <div class="header-actions">
+                <button class="icon-button" aria-label="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+                <button class="icon-button user-account" aria-label="Google Account">
+                    <i class="fa-solid fa-user"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="card-container">
+                <div class="feature-card" id="card1">
+                    <div class="card-preview">
+                        <span>preview video of the feature</span>
+                    </div>
+                    <button class="card-action-button">Draw</button>
+                </div>
+                <div class="feature-card" id="card2">
+                    <div class="card-preview">
+                        <span>preview video of the feature</span>
+                    </div>
+                    <button class="card-action-button">Create</button>
+                </div>
+            </div>
+        </main>
+
+        <!--
+        *  BOTTOM INTERACTION BAR
+        -->
+        <footer class="bottom-bar-wrapper">
+            <button class="detach-button left" id="component-creation-btn">
+                <i class="fa-solid fa-plus"></i>
+                <span>Component Creation</span>
+            </button>
+            <div class="bridge left-bridge" id="left-bridge"></div>
+
+            <div class="main-input-container">
+                <button class="icon-button input-icon" aria-label="Upload files">
+                    <i class="fa-solid fa-arrow-up"></i>
+                </button>
+                <input type="text" placeholder="ask gemini" class="main-input">
+                <button class="icon-button input-icon" aria-label="Use microphone">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button class="icon-button input-icon" aria-label="Features">
+                    <i class="fa-solid fa-grip"></i>
+                </button>
+            </div>
+
+            <div class="bridge right-bridge" id="right-bridge"></div>
+            <button class="detach-button right" id="view-website-btn">
+                <span>View Website</span>
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Sidebar Toggle ---
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+            });
+
+            // --- Interactive Card Effect ---
+            const cards = document.querySelectorAll('.feature-card');
+
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const rotateX = (y - centerY) / 20; // rotation factor
+                    const rotateY = (centerX - x) / 20;
+
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                });
+            });
+
+            // --- Bottom Bar "Bridge/Rope" Animation ---
+            const bottomBarWrapper = document.querySelector('.bottom-bar-wrapper');
+            const leftBridge = document.getElementById('left-bridge');
+            const rightBridge = document.getElementById('right-bridge');
+
+            // The bridge is now a toggle to hide/show the adjacent button
+            leftBridge.addEventListener('click', () => {
+                bottomBarWrapper.classList.toggle('left-detached');
+            });
+
+            rightBridge.addEventListener('click', () => {
+                bottomBarWrapper.classList.toggle('right-detached');
+            });
+        });
+    </script>
+</body>
+</html>
