@@ -79,16 +79,37 @@
             color: var(--text-primary);
         }
         .sidebar-toggle .logo {
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
         }
-        .sidebar.collapsed .logo {
-            transform: rotate(-90deg);
-        }
+        /* Removed .sidebar.collapsed .logo transform here, will be hidden */
         .logo-gemini-star {
             transition: opacity 0.3s ease;
         }
-        .sidebar.collapsed .logo-gemini-star {
-            opacity: 0;
+        /* Removed .sidebar.collapsed .logo-gemini-star opacity here, parent will be hidden */
+
+        .sidebar-clock {
+            display: none; /* Hidden by default */
+            color: var(--text-primary);
+            font-size: 1.1rem; /* Adjusted for better visibility */
+            font-weight: 500;
+            line-height: 1; /* Ensure it doesn't take too much vertical space */
+        }
+
+        .sidebar.collapsed .sidebar-toggle .logo {
+            display: none; /* Hide logo when sidebar is collapsed */
+        }
+
+        .sidebar.collapsed .sidebar-toggle .sidebar-clock {
+            display: inline; /* Show clock when sidebar is collapsed */
+        }
+
+        /* Ensure the button content is centered */
+        .sidebar-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px; /* Fixed width for centering content */
+            height: 48px; /* Fixed height for centering content */
         }
 
         .sidebar-content {
@@ -350,18 +371,18 @@
             font-size: 0.9rem;
             cursor: pointer;
             white-space: nowrap;
-            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55),
-                        opacity 0.4s ease,
-                        width 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55),
-                        padding 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transition: transform 0.35s ease-in-out,
+                        opacity 0.35s ease-in-out,
+                        width 0.35s ease-in-out,
+                        padding 0.35s ease-in-out,
+                        border-color 0.35s ease-in-out;
         }
 
         .bridge {
             height: 5px;
             width: 1.5rem; /* The length of the 'rope' */
-            /* UPDATED: Added border-radius to the transition */
-            transition: width 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55),
-                        opacity 0.3s,
+            transition: width 0.35s ease-in-out,
+                        opacity 0.3s ease-in-out,
                         border-radius 0.3s ease-in-out;
             cursor: pointer;
             border-radius: 0; /* Explicitly start as a straight line */
@@ -387,18 +408,18 @@
             opacity: 0;
             pointer-events: none;
             overflow: hidden;
-            border-color: transparent;
+            border-color: transparent !important; /* Ensure border color changes immediately on detach */
         }
 
-        /* NEW: Add curves to the bridges when the buttons are detached */
+        /* Curves for bridges when buttons are detached */
         .bottom-bar-wrapper.left-detached .left-bridge {
-            border-top-left-radius: 5px;
-            border-bottom-left-radius: 5px;
+            border-top-left-radius: 4px; /* Smoother curve */
+            border-bottom-left-radius: 4px; /* Smoother curve */
         }
 
         .bottom-bar-wrapper.right-detached .right-bridge {
-            border-top-right-radius: 5px;
-            border-bottom-right-radius: 5px;
+            border-top-right-radius: 4px; /* Smoother curve */
+            border-bottom-right-radius: 4px; /* Smoother curve */
         }
 
 
@@ -443,6 +464,7 @@
                     <path d="M50 25V50L75 62.5" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
                     <path class="logo-gemini-star" d="M50 4L54.3431 16.6569L62.5 12.5L62.5 25L75 25L66.8299 33.1701L75 41.3402L62.5 41.3402L62.5 50L50 50" fill="#A855F7"/>
                 </svg>
+                <span class="sidebar-clock"></span>
             </button>
         </header>
 
@@ -478,12 +500,10 @@
                     <button class="view-more">View more</button>
                 </div>
                 <div class="component-list-item">work</div>
-                 <div class="component-grid">
-                    <div class="component-item" data-name="Dashboard"></div>
-                    <div class="component-item" data-name="API Module"></div>
-                    <div class="component-item" data-name="Auth Flow"></div>
-                    <div class="component-item" data-name="Data Table"></div>
-                </div>
+                <div class="component-list-item">Dashboard</div>
+                <div class="component-list-item">API Module</div>
+                <div class="component-list-item">Auth Flow</div>
+                <div class="component-list-item">Data Table</div>
             </section>
         </div>
 
@@ -563,10 +583,39 @@
             // --- Sidebar Toggle ---
             const sidebar = document.querySelector('.sidebar');
             const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const logo = sidebarToggle.querySelector('.logo'); // Get logo
+            const sidebarClock = sidebarToggle.querySelector('.sidebar-clock'); // Get clock element
+            let clockInterval = null;
+
+            function updateClock() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                sidebarClock.textContent = `${hours}:${minutes}`;
+            }
 
             sidebarToggle.addEventListener('click', () => {
                 sidebar.classList.toggle('collapsed');
+
+                if (sidebar.classList.contains('collapsed')) {
+                    updateClock(); // Update immediately
+                    if (clockInterval) clearInterval(clockInterval); // Clear existing interval just in case
+                    clockInterval = setInterval(updateClock, 1000); // Update every second
+                    // CSS handles hiding logo and showing clock
+                } else {
+                    if (clockInterval) {
+                        clearInterval(clockInterval);
+                        clockInterval = null;
+                    }
+                    // CSS handles showing logo and hiding clock
+                }
             });
+
+            // Initial check in case the sidebar starts collapsed (optional, based on default state)
+            // if (sidebar.classList.contains('collapsed')) {
+            //     updateClock();
+            //     clockInterval = setInterval(updateClock, 1000);
+            // }
 
             // --- Interactive Card Effect ---
             const cards = document.querySelectorAll('.feature-card');
