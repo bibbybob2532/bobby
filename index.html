@@ -977,9 +977,9 @@
             }
 
             // --- Project Filtering & Pinning & Search & Dropdowns & Renaming & Detailed View ---
-            const sidebar = document.querySelector('.sidebar');
-            const sidebarHeader = sidebar.querySelector('.sidebar-header');
-            const sidebarContent = sidebar.querySelector('.sidebar-content');
+            // const sidebar = document.querySelector('.sidebar'); // Already declared
+            const sidebarHeader = sidebar.querySelector('.sidebar-header'); // sidebar is already declared
+            const sidebarContent = sidebar.querySelector('.sidebar-content'); // sidebar is already declared
             const searchInput = sidebarContent.querySelector('.search-bar input');
 
             const recentComponentsGrid = sidebarContent.querySelector('.component-grid');
@@ -988,7 +988,7 @@
             const pinnedItemsContainer = pinnedProjectsSection ? pinnedProjectsSection.querySelector('.pinned-items-container') : null;
 
             // Detailed Project View Elements
-            const detailedProjectView = sidebar.querySelector('.detailed-project-view');
+            const detailedProjectView = sidebar.querySelector('.detailed-project-view'); // sidebar is already declared
             const detailedProjectNameEl = detailedProjectView.querySelector('.detailed-project-name');
             const detailedProjectGridEl = detailedProjectView.querySelector('.detailed-project-components-grid');
             const backToSidebarBtn = detailedProjectView.querySelector('.back-to-sidebar-btn');
@@ -1000,11 +1000,10 @@
 
             let originalSearchAreaContainer = null;
             if (searchBarElement && searchBarElement.parentElement) {
-                 // Simplified: Assume searchBar and searchFiltersDropdownContainer are siblings or searchBarElement's parent is the container
                 if (searchBarElement.parentElement.classList.contains('sidebar-content') && searchFiltersDropdownContainer && searchBarElement.nextElementSibling === searchFiltersDropdownContainer) {
-                     originalSearchAreaContainer = sidebarContent; // Both are direct children
+                     originalSearchAreaContainer = sidebarContent;
                 } else {
-                     originalSearchAreaContainer = searchBarElement.parentElement; // Assume they are in a dedicated div
+                     originalSearchAreaContainer = searchBarElement.parentElement;
                 }
             }
 
@@ -1014,6 +1013,33 @@
             let visibleProjectComponentsCount = 0;
             const COMPONENTS_PER_PAGE = 12;
             const TOTAL_PLACEHOLDER_COMPONENTS = 30;
+
+            function loadMoreProjectComponents() {
+                if (!detailedProjectGridEl) return;
+                let newItemsLoaded = 0;
+                const limit = Math.min(TOTAL_PLACEHOLDER_COMPONENTS, visibleProjectComponentsCount + COMPONENTS_PER_PAGE);
+
+                for (let i = visibleProjectComponentsCount + 1; i <= limit; i++) {
+                    const comp = document.createElement('div');
+                    comp.className = 'component-item';
+                    comp.dataset.name = `Component ${i}`;
+                    comp.innerHTML = `<span style="font-size:0.8rem; color: var(--text-secondary); display: block;">Component ${i}</span><span style="font-size:0.7rem; color: #777;">(Detail View)</span>`;
+                    detailedProjectGridEl.appendChild(comp);
+                    newItemsLoaded++;
+                }
+                visibleProjectComponentsCount += newItemsLoaded;
+
+                if (detailedProjectFooter && viewMoreComponentsBtn) { // Ensure elements exist
+                    if (visibleProjectComponentsCount >= TOTAL_PLACEHOLDER_COMPONENTS) {
+                        viewMoreComponentsBtn.style.display = 'none';
+                        detailedProjectFooter.style.display = 'none';
+                    } else {
+                        viewMoreComponentsBtn.style.display = 'inline-block';
+                        detailedProjectFooter.style.display = 'block';
+                    }
+                }
+                filterItems();
+            }
 
             function updatePinnedSectionVisibility() {
                 if (pinnedItemsContainer && pinnedProjectsSection && pinnedItemsContainer.children.length > 0) {
@@ -1026,17 +1052,19 @@
             function filterItems() {
                 const searchTerm = searchInput.value.toLowerCase();
 
-                if (detailedProjectView.classList.contains('view-visible')) {
+                if (detailedProjectView && detailedProjectView.classList.contains('view-visible')) {
+                    // Detailed Project View is active - only filter components within it
                     if (detailedProjectGridEl) {
                         const componentItems = detailedProjectGridEl.querySelectorAll('.component-item');
                         componentItems.forEach(item => {
                             const itemName = (item.dataset.name || '').toLowerCase();
                             const matchesTerm = itemName.includes(searchTerm);
+                            // Search type filter is not used here, effectively it's always "components"
                             item.style.display = matchesTerm ? '' : 'none';
                         });
                     }
                 } else {
-                    // Main sidebar view
+                    // Main sidebar view is active
                     if (recentComponentsGrid) {
                         const componentItems = recentComponentsGrid.querySelectorAll('.component-item');
                         componentItems.forEach(item => {
@@ -1085,31 +1113,8 @@
                 itemsToSort.forEach(item => projectsSection.appendChild(item));
             }
 
-            function loadMoreProjectComponents() {
-                if (!detailedProjectGridEl) return;
-                const currentGridItemCount = detailedProjectGridEl.children.length;
-                let newItemsLoaded = 0;
-                const limit = Math.min(TOTAL_PLACEHOLDER_COMPONENTS, currentGridItemCount + COMPONENTS_PER_PAGE);
-
-                for (let i = visibleProjectComponentsCount + 1; i <= limit; i++) { // Start from visibleProjectComponentsCount
-                    const comp = document.createElement('div');
-                    comp.className = 'component-item';
-                    comp.dataset.name = `Component ${i}`;
-                    comp.innerHTML = `<span style="font-size:0.8rem; color: var(--text-secondary);">Cmp ${i} (Detail)</span>`;
-                    detailedProjectGridEl.appendChild(comp);
-                    newItemsLoaded++;
-                }
-                visibleProjectComponentsCount += newItemsLoaded;
-
-                if (visibleProjectComponentsCount >= TOTAL_PLACEHOLDER_COMPONENTS) {
-                    if(viewMoreComponentsBtn) viewMoreComponentsBtn.style.display = 'none';
-                    if(detailedProjectFooter) detailedProjectFooter.style.display = 'none';
-                } else {
-                    if(viewMoreComponentsBtn) viewMoreComponentsBtn.style.display = 'inline-block';
-                    if(detailedProjectFooter) detailedProjectFooter.style.display = 'block';
-                }
-                filterItems();
-            }
+            // NOTE: The loadMoreProjectComponents function was duplicated. One instance is removed here.
+            // The first instance (defined earlier) is kept.
 
             function showDetailedProjectView(projectItem) {
                 if (!detailedProjectView || !sidebarContent || !projectItem) return;
@@ -1132,8 +1137,8 @@
                     detailedProjectView.classList.add('view-visible');
                 });
 
-                loadMoreProjectComponents();
-                filterItems();
+                loadMoreProjectComponents(); // This function now calls filterItems() at its end.
+                // filterItems(); // No longer explicitly needed here
 
                 if (sidebar.classList.contains('collapsed')) {
                     sidebar.classList.remove('collapsed');
@@ -1151,10 +1156,14 @@
                 detailedProjectView.classList.remove('view-visible');
 
                 if(originalSearchAreaContainer && searchBarElement && searchFiltersDropdownContainer) {
-                    // Re-attach to original container. If originalSearchAreaContainer is sidebarContent, elements are added as last children.
-                    // If it's a specific div, this should work fine.
-                    originalSearchAreaContainer.appendChild(searchBarElement); // Could also use insertBefore if order matters strictly with other elements.
-                    originalSearchAreaContainer.appendChild(searchFiltersDropdownContainer);
+                    const firstChildOfOriginal = originalSearchAreaContainer.firstChild;
+                    if (firstChildOfOriginal) {
+                        originalSearchAreaContainer.insertBefore(searchBarElement, firstChildOfOriginal);
+                        originalSearchAreaContainer.insertBefore(searchFiltersDropdownContainer, searchBarElement.nextSibling);
+                    } else { // If originalSearchAreaContainer is empty for some reason
+                        originalSearchAreaContainer.appendChild(searchBarElement);
+                        originalSearchAreaContainer.appendChild(searchFiltersDropdownContainer);
+                    }
 
                     if(searchInput) searchInput.placeholder = "Search";
                     if(searchFiltersDropdownContainer) searchFiltersDropdownContainer.style.display = '';
@@ -1284,7 +1293,9 @@
                     }
                 });
             });
+            // --- END Detailed Project View Logic --- // Moved this comment to logically group detailed view listeners
 
+            // --- Project Renaming Logic ---
             const HOLD_DURATION = 500;
             let holdTimeoutId = null;
             let activeRenameItem = null;
@@ -1383,23 +1394,37 @@
             if(backToSidebarBtn) {
                 backToSidebarBtn.addEventListener('click', hideDetailedProjectView);
             }
-            if(viewMoreComponentsBtn) { // Add listener for view more button
+            if(viewMoreComponentsBtn) {
                 viewMoreComponentsBtn.addEventListener('click', loadMoreProjectComponents);
             }
 
-            const existingSidebarToggleLogic = sidebarToggle.onclick;
-            sidebarToggle.addEventListener('click', function(event) {
-                if(typeof existingSidebarToggleLogic === 'function') {
-                    // existingSidebarToggleLogic.call(this, event);
-                }
-                if (detailedProjectView && detailedProjectView.classList.contains('view-visible')) {
-                    if (sidebar.classList.contains('collapsed')) {
-                         hideDetailedProjectView();
-                    }
-                }
-            });
+            // Sidebar Toggle interaction with Detailed View
+            // Remove pre-existing onclick handlers before adding a new one to avoid conflicts or multiple calls
+            const oldSidebarToggleOnClick = sidebarToggle.onclick;
+            sidebarToggle.onclick = null; // Remove any direct onclick
 
-            // --- Interactive Card Effect --- (This was here before, ensure it's the last UI script)
+            sidebarToggle.addEventListener('click', function(event) {
+                // Call original logic if it was attached via onclick (very basic case)
+                // if(typeof oldSidebarToggleOnClick === 'function') {
+                //    oldSidebarToggleOnClick.call(this, event);
+                // }
+
+                // The primary toggle logic for sidebar.classList.toggle('collapsed') and analog clock
+                // is assumed to be the separate event listener defined at the top of the script.
+                // This listener *augments* that by specifically handling the detailed view.
+
+                if (detailedProjectView && detailedProjectView.classList.contains('view-visible')) {
+                    // If detailed view is open, clicking sidebar toggle should hide it
+                    // and then proceed with collapse/expand of the main sidebar.
+                    hideDetailedProjectView();
+                }
+                // The original classList.toggle and analog clock logic will still execute
+                // from its own event listener, ensuring the sidebar collapses/expands as usual.
+            });
+            // --- END Detailed Project View Logic ---
+
+            // --- Project Renaming Logic ---
+            // (This was here before, ensure it's the last UI script interacting with sidebarContent clicks for mousedown)
             const cards = document.querySelectorAll('.feature-card');
 
             cards.forEach(card => {
