@@ -161,6 +161,31 @@
             border-color: var(--accent-primary);
         }
 
+        .view-more-cloudy {
+            display: block;
+            width: calc(100% - 0.5rem);
+            margin: 0.75rem auto 0 auto;
+            padding: 0.6rem 1rem;
+            background-color: rgba(48, 49, 52, 0.7);
+            color: var(--text-primary);
+            border: 1px solid rgba(95, 99, 104, 0.5);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .view-more-cloudy:hover {
+            background-color: rgba(58, 59, 62, 0.8);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .view-more-cloudy:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         /* Dropdown Styles */
         .filter-dropdown-container {
             position: relative;
@@ -170,33 +195,29 @@
             background-color: var(--bg-card); /* Slightly different from input for distinction */
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
-            padding: 0.5rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            /* padding: 0.5rem 0.75rem; Modified for icon button */
+            padding: 0; /* Remove padding if fixed size */
+            width: 40px; /* Icon button size */
+            height: 40px; /* Icon button size */
+            border-radius: 50%; /* Make it round like other icon buttons */
+            font-size: 1rem; /* Icon size */
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, border-color 0.2s;
             display: flex;
-            justify-content: space-between;
+            /* justify-content: space-between; Removed */
+            justify-content: center; /* Center the icon */
             align-items: center;
-            width: 100%;
-            text-align: left;
+            /* width: 100%; Removed */
+            /* text-align: left; Removed */
         }
         .filter-dropdown-toggle:hover {
             background-color: var(--bg-input);
             color: var(--text-primary);
             border-color: #78787a;
         }
-        .filter-dropdown-toggle .filter-dropdown-label {
-            flex-grow: 1;
-            margin-right: 0.5rem; /* Space before chevron */
-        }
-        .filter-dropdown-toggle .fa-chevron-down {
-            transition: transform 0.2s ease-out;
-            font-size: 0.8em; /* Slightly smaller chevron */
-        }
-        .filter-dropdown-toggle.open .fa-chevron-down {
-            transform: rotate(180deg);
-        }
+        /* .filter-dropdown-toggle .filter-dropdown-label { Removed } */
+        /* .filter-dropdown-toggle .fa-chevron-down { Removed } */
+        /* .filter-dropdown-toggle.open .fa-chevron-down { Removed } */
 
         .filter-dropdown-options {
             display: none;
@@ -260,6 +281,71 @@
         .project-item.renaming .project-name-text {
             display: none;
         }
+
+        /* Project Pagination Styles */
+        .projects-page-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            background-color: var(--bg-sidebar);
+            margin-top: 0.5rem;
+            /* min-height will be set by JS */
+        }
+        .projects-list-viewport {
+            position: relative;
+            overflow: hidden; /* Crucial for sliding effect */
+            /* min-height will be set by JS based on DYNAMIC_PROJECTS_PER_PAGE * PROJECT_ITEM_HEIGHT */
+        }
+        .projects-list-page {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+            transition: transform 0.35s ease-in-out, opacity 0.3s ease-in-out;
+            opacity: 1;
+        }
+        .projects-list-page.next {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        .projects-list-page.prev {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        .projects-list-page.current {
+            transform: translateX(0);
+            opacity: 1;
+            z-index: 1;
+        }
+        .projects-list-page.slide-out-left {
+            transform: translateX(-100%);
+            opacity: 0;
+            z-index: 0;
+        }
+        .projects-list-page.slide-out-right {
+            transform: translateX(100%);
+            opacity: 0;
+            z-index: 0;
+        }
+        .projects-dot-navigation {
+            text-align: center;
+            margin-top: 0.75rem;
+            padding-bottom: 0.25rem; /* Add some space at the bottom */
+        }
+        .projects-dot-navigation .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            margin: 0 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .projects-dot-navigation .dot.active {
+            background-color: var(--accent-primary);
+        }
+
         .project-rename-input {
             flex-grow: 1; /* Takes available space */
             border: 1px solid var(--accent-primary);
@@ -753,8 +839,8 @@
             </div>
             <!-- New Search Filter Dropdown -->
             <div class="filter-dropdown-container" style="padding: 0 0.25rem; margin-bottom: 0.75rem;">
-                <button class="filter-dropdown-toggle" data-target-dropdown="search-filter-options">
-                    <span class="filter-dropdown-label">Search: All</span> <i class="fa-solid fa-chevron-down"></i>
+                <button class="filter-dropdown-toggle" data-target-dropdown="search-filter-options" aria-label="Search filter type">
+                    <i class="fa-solid fa-filter"></i>
                 </button>
                 <div class="filter-dropdown-options" id="search-filter-options">
                     <button class="filter-option active-search-filter" data-search-filter="all" data-label="Search: All">All</button>
@@ -772,10 +858,10 @@
                 </div>
             </section>
 
-            <section class="components-section">
+            <section class="components-section" id="recent-components-section">
                 <div class="section-header">
                     <span>Recent Components</span>
-                    <button class="view-more">View more</button>
+                    <!-- Old "View more" button removed -->
                 </div>
                 <div class="component-grid">
                     <div class="component-item" data-name="UI Kit"></div>
@@ -783,6 +869,7 @@
                     <div class="component-item" data-name="Button Set"></div>
                     <div class="component-item" data-name="Form Fields"></div>
                 </div>
+                <button class="view-more-cloudy" id="view-more-recent-components">View more</button>
             </section>
 
             <section class="components-section">
@@ -795,12 +882,12 @@
             <section class="components-section" id="projects-section">
                 <div class="section-header">
                     <span>Projects</span>
-                    <button class="view-more">View more</button>
+                    <!-- "View more" button removed if it was here -->
                 </div>
-                <!-- New Project Sort Dropdown -->
+                <!-- Project Sort Dropdown -->
                 <div class="filter-dropdown-container" style="padding: 0 0.25rem; margin-bottom: 0.75rem;">
-                    <button class="filter-dropdown-toggle" data-target-dropdown="project-filter-options">
-                        <span class="filter-dropdown-label">Sort: Newest</span> <i class="fa-solid fa-chevron-down"></i>
+                    <button class="filter-dropdown-toggle" data-target-dropdown="project-filter-options" aria-label="Sort projects by">
+                        <i class="fa-solid fa-filter"></i>
                     </button>
                     <div class="filter-dropdown-options" id="project-filter-options">
                         <button class="filter-option active-filter" data-filter="newest" data-label="Sort: Newest">Newest</button>
@@ -808,6 +895,18 @@
                         <button class="filter-option" data-filter="name" data-label="Sort: By Name">By Name</button>
                     </div>
                 </div>
+
+                <!-- New Structure for Paginated Projects -->
+                <div class="projects-page-card">
+                    <div class="projects-list-viewport">
+                        <!-- Project items will be moved here by JavaScript -->
+                    </div>
+                </div>
+                <div class="projects-dot-navigation" style="text-align: center; margin-top: 0.75rem;">
+                    <!-- Dots will be generated by JavaScript -->
+                </div>
+
+                <!-- Original Project Items (to be collected by JS and then removed/hidden) -->
                 <div class="component-list-item project-item" data-name="Work" data-timestamp="20230105" data-pinned="false">
                     <span>Work</span>
                     <button class="pin-btn" aria-label="Pin Work"><i class="fa-solid fa-thumbtack"></i></button>
@@ -1423,6 +1522,35 @@
             });
             // --- END Detailed Project View Logic ---
 
+            // Recent Components "View More" Button Logic
+            const recentComponentsSection = document.getElementById('recent-components-section');
+            if (recentComponentsSection) {
+                const recentComponentsGrid = recentComponentsSection.querySelector('.component-grid');
+                if (recentComponentsGrid) {
+                    const recentComponentItems = recentComponentsGrid.querySelectorAll('.component-item');
+                    recentComponentItems.forEach((item, index) => {
+                        if (index >= 4) { // Should not happen with current static HTML, but good for dynamic
+                            item.style.display = 'none';
+                        } else {
+                            item.style.display = ''; // Ensure visible
+                        }
+                    });
+                }
+
+                const viewMoreRecentComponentsBtn = document.getElementById('view-more-recent-components');
+                if (viewMoreRecentComponentsBtn) {
+                    viewMoreRecentComponentsBtn.style.display = 'block'; // Make it visible
+
+                    // Clone and replace to remove any potentially pre-existing listeners from multiple script runs
+                    const newBtn = viewMoreRecentComponentsBtn.cloneNode(true);
+                    viewMoreRecentComponentsBtn.parentNode.replaceChild(newBtn, viewMoreRecentComponentsBtn);
+
+                    newBtn.addEventListener('click', () => {
+                        alert("This will navigate to the Component Creation Part (feature pending).");
+                    });
+                }
+            }
+
             // --- Project Renaming Logic ---
             // (This was here before, ensure it's the last UI script interacting with sidebarContent clicks for mousedown)
             const cards = document.querySelectorAll('.feature-card');
@@ -1453,14 +1581,18 @@
             const leftBridge = document.getElementById('left-bridge');
             const rightBridge = document.getElementById('right-bridge');
 
-            // The bridge is now a toggle to hide/show the adjacent button
-            leftBridge.addEventListener('click', () => {
-                bottomBarWrapper.classList.toggle('left-detached');
+            if(leftBridge) leftBridge.addEventListener('click', () => {
+                if(bottomBarWrapper) bottomBarWrapper.classList.toggle('left-detached');
             });
 
-            rightBridge.addEventListener('click', () => {
-                bottomBarWrapper.classList.toggle('right-detached');
+            if(rightBridge) rightBridge.addEventListener('click', () => {
+                if(bottomBarWrapper) bottomBarWrapper.classList.toggle('right-detached');
             });
+
+            // Call initializers
+            if (typeof initializeProjectsPagination === 'function') {
+                initializeProjectsPagination();
+            }
         });
     </script>
 </body>
